@@ -1,0 +1,1504 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Baseline%20Values.csv\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!ls Baseline%20Values.csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n",
+      "                                 Dload  Upload   Total   Spent    Left  Speed\n",
+      "100  1123  100  1123    0     0   7444      0 --:--:-- --:--:-- --:--:--     0 --:--:-- --:--:-- --:--:--  7486\n"
+     ]
+    }
+   ],
+   "source": [
+    "!curl https://raw.githubusercontent.com/carolchen128/AB-Testing-Project/master/ControlGroup_data.csv --output ControlGroup_data.csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "ControlGroup_data.csv\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!ls ControlGroup_data.csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n",
+      "                                 Dload  Upload   Total   Spent    Left  Speed\n",
+      "100  1120  100  1120    0     0   5530      0 --:--:-- --:--:-- --:--:--  5544\n"
+     ]
+    }
+   ],
+   "source": [
+    "!curl https://raw.githubusercontent.com/carolchen128/AB-Testing-Project/master/ExperimentGroup_data.csv --output ExperimentGroup_data.csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "ExperimentGroup_data.csv\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!ls ExperimentGroup_data.csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>metric</th>\n",
+       "      <th>baseline_value</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Unique cookies to view page per day:</td>\n",
+       "      <td>40000.000000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Unique cookies to click \"Start free trial\" per...</td>\n",
+       "      <td>3200.000000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Enrollments per day:</td>\n",
+       "      <td>660.000000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Click-through-probability on \"Start free trial\":</td>\n",
+       "      <td>0.080000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Probability of enrolling, given click:</td>\n",
+       "      <td>0.206250</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5</th>\n",
+       "      <td>Probability of payment, given enroll:</td>\n",
+       "      <td>0.530000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>6</th>\n",
+       "      <td>Probability of payment, given click</td>\n",
+       "      <td>0.109313</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                              metric  baseline_value\n",
+       "0               Unique cookies to view page per day:    40000.000000\n",
+       "1  Unique cookies to click \"Start free trial\" per...     3200.000000\n",
+       "2                               Enrollments per day:      660.000000\n",
+       "3   Click-through-probability on \"Start free trial\":        0.080000\n",
+       "4             Probability of enrolling, given click:        0.206250\n",
+       "5              Probability of payment, given enroll:        0.530000\n",
+       "6                Probability of payment, given click        0.109313"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# load baseline data\n",
+    "baseline = pd.read_csv('Baseline%20Values.csv', header = None, names = ['metric', 'baseline_value'])\n",
+    "#type(baseline)  # dataframe\n",
+    "baseline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>Pageviews</th>\n",
+       "      <th>Clicks</th>\n",
+       "      <th>Enrollments</th>\n",
+       "      <th>Payments</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>7723</td>\n",
+       "      <td>687</td>\n",
+       "      <td>134.0</td>\n",
+       "      <td>70.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>9102</td>\n",
+       "      <td>779</td>\n",
+       "      <td>147.0</td>\n",
+       "      <td>70.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>10511</td>\n",
+       "      <td>909</td>\n",
+       "      <td>167.0</td>\n",
+       "      <td>95.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>9871</td>\n",
+       "      <td>836</td>\n",
+       "      <td>156.0</td>\n",
+       "      <td>105.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>10014</td>\n",
+       "      <td>837</td>\n",
+       "      <td>163.0</td>\n",
+       "      <td>64.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date  Pageviews  Clicks  Enrollments  Payments\n",
+       "0  Sat, Oct 11       7723     687        134.0      70.0\n",
+       "1  Sun, Oct 12       9102     779        147.0      70.0\n",
+       "2  Mon, Oct 13      10511     909        167.0      95.0\n",
+       "3  Tue, Oct 14       9871     836        156.0     105.0\n",
+       "4  Wed, Oct 15      10014     837        163.0      64.0"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# load experiment dataset\n",
+    "experiment = pd.read_csv('ExperimentGroup_data.csv')\n",
+    "#experiment\n",
+    "\n",
+    "# load control dataset\n",
+    "control = pd.read_csv('ControlGroup_data.csv')\n",
+    "control.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Given baseline values\n",
+    "cookie_base = 40000\n",
+    "click_base = 3200\n",
+    "enrollment_base = 660\n",
+    "\n",
+    "# Daily pageview cookies\n",
+    "dailycookie = 5000\n",
+    "n_click = dailycookie * click_base / cookie_base\n",
+    "n_enrollment = dailycookie * enrollment_base / cookie_base"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the number of clicks is 400\n",
+      "the number of enrollment is 82.500000\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('the number of clicks is %d' % (n_click))\n",
+    "print('the number of enrollment is %f' % (n_enrollment))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2. Metric -variability- standard deviation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the standard deviation of gross conversion is 0.0202 \n"
+     ]
+    }
+   ],
+   "source": [
+    "# metric - variability \n",
+    "# calculate standard deviation\n",
+    "# Gross conversion - Probability of enrolling, given click\n",
+    "grossconv = 0.206250\n",
+    "grossconv_sd = round(np.sqrt(grossconv * (1 - grossconv) / 400), 4)\n",
+    "grossconv_sd\n",
+    "print('the standard deviation of gross conversion is {} '.format(grossconv_sd))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the standard deviation of retention is 0.0549\n"
+     ]
+    }
+   ],
+   "source": [
+    "# metric: retention - variability\n",
+    "# calculate standard deviation\n",
+    "# retention - probability of payment, given enroll\n",
+    "\n",
+    "retention = 0.53\n",
+    "retention_sd = round(np.sqrt(retention * (1 - retention) / 82.5), 4)\n",
+    "retention_sd\n",
+    "print('the standard deviation of retention is {}'.format(retention_sd))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the standard deviation of net conversion is 0.0156\n"
+     ]
+    }
+   ],
+   "source": [
+    "# metric: Net conversion - variability\n",
+    "# calculate standard deviation \n",
+    "# Net conversion - Probability of payment, given click\n",
+    "\n",
+    "netconv = 0.109313\n",
+    "netconv_sd = round(np.sqrt(netconv * (1 - netconv) / 400), 4)\n",
+    "netconv_sd\n",
+    "print('the standard deviation of net conversion is {:.4}'.format(netconv_sd))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Control</th>\n",
+       "      <th>Experiment</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>Cookies</th>\n",
+       "      <td>345543</td>\n",
+       "      <td>344660</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Clicks</th>\n",
+       "      <td>28378</td>\n",
+       "      <td>28325</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "         Control  Experiment\n",
+       "Cookies   345543      344660\n",
+       "Clicks     28378       28325"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# summarize data to create a table\n",
+    "results = {'Control': pd.Series([control.Pageviews.sum(), control.Clicks.sum()],\n",
+    "                               index = ['Cookies', 'Clicks']),\n",
+    "          'Experiment': pd.Series([experiment.Pageviews.sum(), experiment.Clicks.sum()],\n",
+    "                                 index = ['Cookies', 'Clicks'])}\n",
+    "results = pd.DataFrame(results)\n",
+    "results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 3. Summarize data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Control</th>\n",
+       "      <th>Experiment</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>Cookies</th>\n",
+       "      <td>345543</td>\n",
+       "      <td>344660</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Clicks</th>\n",
+       "      <td>28378</td>\n",
+       "      <td>28325</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "         Control  Experiment\n",
+       "Cookies   345543      344660\n",
+       "Clicks     28378       28325"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "table = pd.DataFrame({\n",
+    "    'Control': [control.Pageviews.sum(), control.Clicks.sum()], \n",
+    "    'Experiment': [experiment.Pageviews.sum(), experiment.Clicks.sum()]}, \n",
+    "    index  = ['Cookies', 'Clicks'])\n",
+    "table"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 4.Sanity Check\n",
+    "cookies and clicks are randomly assgned to control and experiment group with probability of 0.5\n",
+    "<br> total - expected_value - standard error - margin of error - CI\n",
+    "<br> observed_value - sanity check"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Control</th>\n",
+       "      <th>Experiment</th>\n",
+       "      <th>Total</th>\n",
+       "      <th>Expected_value</th>\n",
+       "      <th>Observed_value</th>\n",
+       "      <th>Standard_Error</th>\n",
+       "      <th>Margin_Error</th>\n",
+       "      <th>CI_Lower</th>\n",
+       "      <th>CI_Upper</th>\n",
+       "      <th>Pass_Sanity</th>\n",
+       "      <th>Diff</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>Cookies</th>\n",
+       "      <td>345543</td>\n",
+       "      <td>344660</td>\n",
+       "      <td>690203</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>0.499360</td>\n",
+       "      <td>0.001204</td>\n",
+       "      <td>0.002359</td>\n",
+       "      <td>0.497641</td>\n",
+       "      <td>0.502359</td>\n",
+       "      <td>True</td>\n",
+       "      <td>0.001279</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Clicks</th>\n",
+       "      <td>28378</td>\n",
+       "      <td>28325</td>\n",
+       "      <td>56703</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>0.499533</td>\n",
+       "      <td>0.004199</td>\n",
+       "      <td>0.008231</td>\n",
+       "      <td>0.491769</td>\n",
+       "      <td>0.508231</td>\n",
+       "      <td>True</td>\n",
+       "      <td>0.000935</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "         Control  Experiment   Total  Expected_value  Observed_value  \\\n",
+       "Cookies   345543      344660  690203             0.5        0.499360   \n",
+       "Clicks     28378       28325   56703             0.5        0.499533   \n",
+       "\n",
+       "         Standard_Error  Margin_Error  CI_Lower  CI_Upper  Pass_Sanity  \\\n",
+       "Cookies        0.001204      0.002359  0.497641  0.502359         True   \n",
+       "Clicks         0.004199      0.008231  0.491769  0.508231         True   \n",
+       "\n",
+       "             Diff  \n",
+       "Cookies  0.001279  \n",
+       "Clicks   0.000935  "
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# calculate\n",
+    "table['Total'] = table.Control + table.Experiment\n",
+    "\n",
+    "table['Expected_value'] = 0.5\n",
+    "table['Observed_value'] = table.Experiment / table.Total\n",
+    "\n",
+    "table['Standard_Error'] = np.sqrt(table.Expected_value * (1 - table.Expected_value) * \n",
+    "                                  (1/ table.Control + 1/ table.Experiment))\n",
+    "\n",
+    "table['Margin_Error'] = 1.96 * table.Standard_Error\n",
+    "\n",
+    "table['CI_Lower'] = table.Expected_value - table.Margin_Error\n",
+    "table['CI_Upper'] = table.Expected_value + table.Margin_Error\n",
+    "\n",
+    "table['Pass_Sanity'] = table.apply(lambda x: (x.Observed_value > x.CI_Lower) \n",
+    "                                   and (x.Observed_value < x.CI_Upper), \n",
+    "                                   axis = 1)\n",
+    "\n",
+    "table['Diff'] = abs((table.Experiment - table.Control) / table.Total)\n",
+    "table"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>Pageviews</th>\n",
+       "      <th>Clicks</th>\n",
+       "      <th>Enrollments</th>\n",
+       "      <th>Payments</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>7716</td>\n",
+       "      <td>686</td>\n",
+       "      <td>105.0</td>\n",
+       "      <td>34.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>9288</td>\n",
+       "      <td>785</td>\n",
+       "      <td>116.0</td>\n",
+       "      <td>91.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>10480</td>\n",
+       "      <td>884</td>\n",
+       "      <td>145.0</td>\n",
+       "      <td>79.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>9867</td>\n",
+       "      <td>827</td>\n",
+       "      <td>138.0</td>\n",
+       "      <td>92.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>9793</td>\n",
+       "      <td>832</td>\n",
+       "      <td>140.0</td>\n",
+       "      <td>94.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date  Pageviews  Clicks  Enrollments  Payments\n",
+       "0  Sat, Oct 11       7716     686        105.0      34.0\n",
+       "1  Sun, Oct 12       9288     785        116.0      91.0\n",
+       "2  Mon, Oct 13      10480     884        145.0      79.0\n",
+       "3  Tue, Oct 14       9867     827        138.0      92.0\n",
+       "4  Wed, Oct 15       9793     832        140.0      94.0"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "control_sub = control[pd.isnull(control.Enrollments) != True]\n",
+    "#control_sub\n",
+    "\n",
+    "experiment_sub = experiment[pd.isnull(experiment.Enrollments) != True]\n",
+    "experiment_sub.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Control</th>\n",
+       "      <th>Experiment</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>Pageviews</th>\n",
+       "      <td>212163.0</td>\n",
+       "      <td>211362.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Clicks</th>\n",
+       "      <td>17293.0</td>\n",
+       "      <td>17260.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Enrollments</th>\n",
+       "      <td>3785.0</td>\n",
+       "      <td>3423.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Payments</th>\n",
+       "      <td>2033.0</td>\n",
+       "      <td>1945.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "              Control  Experiment\n",
+       "Pageviews    212163.0    211362.0\n",
+       "Clicks        17293.0     17260.0\n",
+       "Enrollments    3785.0      3423.0\n",
+       "Payments       2033.0      1945.0"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# summarize data\n",
+    "table_sub = pd.DataFrame({'Control': [control_sub.Pageviews.sum(), \n",
+    "                                      control_sub.Clicks.sum(),\n",
+    "                                     control_sub.Enrollments.sum(),\n",
+    "                                     control_sub.Payments.sum()],\n",
+    "                         'Experiment': [experiment_sub.Pageviews.sum(),\n",
+    "                                       experiment_sub.Clicks.sum(),\n",
+    "                                       experiment_sub.Enrollments.sum(),\n",
+    "                                       experiment_sub.Payments.sum()]},\n",
+    "                        index = ['Pageviews', 'Clicks', 'Enrollments', 'Payments'])\n",
+    "table_sub"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Control</th>\n",
+       "      <th>Experiment</th>\n",
+       "      <th>Total</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>Pageviews</th>\n",
+       "      <td>212163.0</td>\n",
+       "      <td>211362.0</td>\n",
+       "      <td>423525.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Clicks</th>\n",
+       "      <td>17293.0</td>\n",
+       "      <td>17260.0</td>\n",
+       "      <td>34553.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Enrollments</th>\n",
+       "      <td>3785.0</td>\n",
+       "      <td>3423.0</td>\n",
+       "      <td>7208.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>Payments</th>\n",
+       "      <td>2033.0</td>\n",
+       "      <td>1945.0</td>\n",
+       "      <td>3978.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "              Control  Experiment     Total\n",
+       "Pageviews    212163.0    211362.0  423525.0\n",
+       "Clicks        17293.0     17260.0   34553.0\n",
+       "Enrollments    3785.0      3423.0    7208.0\n",
+       "Payments       2033.0      1945.0    3978.0"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# add new column: Total\n",
+    "table_sub['Total'] = table_sub.Control + table_sub.Experiment\n",
+    "table_sub"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['Pageviews', 'Clicks', 'Enrollments', 'Payments'], dtype='object')"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "table_sub.index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get values for calculation\n",
+    "\n",
+    "# experiment values\n",
+    "clicks_exp = table_sub.loc['Clicks'].Experiment\n",
+    "enrollments_exp = table_sub.loc['Enrollments'].Experiment\n",
+    "payments_exp = table_sub.loc['Payments'].Experiment\n",
+    "\n",
+    "# control values\n",
+    "clicks_cont = table_sub.loc['Clicks'].Control\n",
+    "enrollments_cont = table_sub.loc['Enrollments'].Control\n",
+    "payments_cont = table_sub.loc['Payments'].Control"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the Gross Conversion for Experiment group is 0.1983 \n",
+      "the Gross Conversion for Control group is 0.2189 \n",
+      "the Gross Conversion for Total is 0.2086\n"
+     ]
+    }
+   ],
+   "source": [
+    "# calculate GrossConversion for both control and experiment groups, total\n",
+    "\n",
+    "GrossConversion_exp = enrollments_exp / clicks_exp\n",
+    "GrossConversion_cont = enrollments_cont / clicks_cont\n",
+    "GrossConversion_total = (enrollments_exp + enrollments_cont) / (clicks_exp + clicks_cont)\n",
+    "\n",
+    "print('the Gross Conversion for Experiment group is {:.4}'.format(GrossConversion_exp),'\\n'\n",
+    "     'the Gross Conversion for Control group is {:.4}'.format(GrossConversion_cont), '\\n'\n",
+    "     'the Gross Conversion for Total is {:.4}'.format(GrossConversion_total))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "the Net Conversion for Experiment group is 0.1127 \n",
+      "the Net Conversion for Control group is 0.1176 \n",
+      "the Net Conversion for Total is 0.1151\n"
+     ]
+    }
+   ],
+   "source": [
+    "# calculate NetConversion for Control group, Experiment group, Total\n",
+    "\n",
+    "NetConversion_exp  = payments_exp / clicks_exp\n",
+    "NetConversion_cont = payments_cont / clicks_cont\n",
+    "NetConversion_total = (payments_exp + payments_cont) / (clicks_exp + clicks_cont)\n",
+    "\n",
+    "print('the Net Conversion for Experiment group is {:.4}'.format(NetConversion_exp),'\\n'\n",
+    "     'the Net Conversion for Control group is {:.4}'.format(NetConversion_cont), '\\n'\n",
+    "     'the Net Conversion for Total is {:.4}'.format(NetConversion_total))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(-0.020554874580361565, -0.0048737226745441675)"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# caluculate the differences between 2 groups - point estimate\n",
+    "# Grosss Conversion\n",
+    "GrossConversion_diff = GrossConversion_exp - GrossConversion_cont\n",
+    "GrossConversion_diff\n",
+    "\n",
+    "# Net Conversion\n",
+    "NetConversion_diff = NetConversion_exp - NetConversion_cont\n",
+    "NetConversion_diff\n",
+    "\n",
+    "GrossConversion_diff, NetConversion_diff"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# define a function to construct 95% CI\n",
+    "def construct_CI(p_hat, z_score, N_cont, N_exp, diff):\n",
+    "    std_err = np.sqrt(p_hat * (1 - p_hat) * (1/N_cont + 1/N_exp))\n",
+    "    marg_err = z_score * std_err\n",
+    "    CI_lower = diff - marg_err\n",
+    "    CI_upper = diff + marg_err\n",
+    "    \n",
+    "    return std_err, marg_err, CI_lower, CI_upper"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(0.004371675385225936,\n",
+       " 0.008568483755042836,\n",
+       " -0.0291233583354044,\n",
+       " -0.01198639082531873)"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "(se_gc, me_gc, cil_gc, ciu_gc) = construct_CI(p_hat = GrossConversion_total,\n",
+    "            z_score = 1.96,\n",
+    "            N_cont = clicks_cont,\n",
+    "            N_exp = clicks_exp,\n",
+    "            diff = GrossConversion_diff)\n",
+    "(se_gc, me_gc, cil_gc, ciu_gc)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 131,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(0.0034341335129324238,\n",
+       " 0.0067309016853475505,\n",
+       " -0.011604624359891718,\n",
+       " 0.001857179010803383)"
+      ]
+     },
+     "execution_count": 131,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Get statistics for Net Conversion\n",
+    "(se_nc, me_nc, cil_nc, ciu_nc) = construct_CI(p_hat = NetConversion_total, \n",
+    "             z_score = 1.96, \n",
+    "            N_cont = clicks_cont,\n",
+    "            N_exp = clicks_exp,\n",
+    "            diff = NetConversion_diff)\n",
+    "(se_nc, me_nc, cil_nc, ciu_nc)\n",
+    "\n",
+    "# CI - contain 0 - not pratically/ statistically significant difference/effect"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 133,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>Pageviews</th>\n",
+       "      <th>Clicks</th>\n",
+       "      <th>Enrollments</th>\n",
+       "      <th>Payments</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>7723</td>\n",
+       "      <td>687</td>\n",
+       "      <td>134.0</td>\n",
+       "      <td>70.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>9102</td>\n",
+       "      <td>779</td>\n",
+       "      <td>147.0</td>\n",
+       "      <td>70.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>10511</td>\n",
+       "      <td>909</td>\n",
+       "      <td>167.0</td>\n",
+       "      <td>95.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>9871</td>\n",
+       "      <td>836</td>\n",
+       "      <td>156.0</td>\n",
+       "      <td>105.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>10014</td>\n",
+       "      <td>837</td>\n",
+       "      <td>163.0</td>\n",
+       "      <td>64.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date  Pageviews  Clicks  Enrollments  Payments\n",
+       "0  Sat, Oct 11       7723     687        134.0      70.0\n",
+       "1  Sun, Oct 12       9102     779        147.0      70.0\n",
+       "2  Mon, Oct 13      10511     909        167.0      95.0\n",
+       "3  Tue, Oct 14       9871     836        156.0     105.0\n",
+       "4  Wed, Oct 15      10014     837        163.0      64.0"
+      ]
+     },
+     "execution_count": 133,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "control_sub.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 137,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>GC_cont</th>\n",
+       "      <th>GC_exp</th>\n",
+       "      <th>NC_cont</th>\n",
+       "      <th>NC_exp</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>0.195051</td>\n",
+       "      <td>0.153061</td>\n",
+       "      <td>0.101892</td>\n",
+       "      <td>0.049563</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>0.188703</td>\n",
+       "      <td>0.147771</td>\n",
+       "      <td>0.089859</td>\n",
+       "      <td>0.115924</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>0.183718</td>\n",
+       "      <td>0.164027</td>\n",
+       "      <td>0.104510</td>\n",
+       "      <td>0.089367</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>0.186603</td>\n",
+       "      <td>0.166868</td>\n",
+       "      <td>0.125598</td>\n",
+       "      <td>0.111245</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>0.194743</td>\n",
+       "      <td>0.168269</td>\n",
+       "      <td>0.076464</td>\n",
+       "      <td>0.112981</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date   GC_cont    GC_exp   NC_cont    NC_exp\n",
+       "0  Sat, Oct 11  0.195051  0.153061  0.101892  0.049563\n",
+       "1  Sun, Oct 12  0.188703  0.147771  0.089859  0.115924\n",
+       "2  Mon, Oct 13  0.183718  0.164027  0.104510  0.089367\n",
+       "3  Tue, Oct 14  0.186603  0.166868  0.125598  0.111245\n",
+       "4  Wed, Oct 15  0.194743  0.168269  0.076464  0.112981"
+      ]
+     },
+     "execution_count": 137,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# not significant - day-by-day analysis\n",
+    "# Create a summary table for each day\n",
+    "signtest = pd.DataFrame()\n",
+    "\n",
+    "signtest['Date'] = control_sub.Date\n",
+    "\n",
+    "signtest['GC_cont'] = control_sub.Enrollments / control_sub.Clicks\n",
+    "signtest['GC_exp'] = experiment_sub.Enrollments / experiment_sub.Clicks\n",
+    "\n",
+    "signtest['NC_cont'] = control_sub.Payments / control_sub.Clicks\n",
+    "signtest['NC_exp'] = experiment_sub.Payments / experiment_sub.Clicks\n",
+    "\n",
+    "signtest.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 140,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>GC_cont</th>\n",
+       "      <th>GC_exp</th>\n",
+       "      <th>NC_cont</th>\n",
+       "      <th>NC_exp</th>\n",
+       "      <th>GC_Sign</th>\n",
+       "      <th>NC_Sign</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>0.195051</td>\n",
+       "      <td>0.153061</td>\n",
+       "      <td>0.101892</td>\n",
+       "      <td>0.049563</td>\n",
+       "      <td>-0.041990</td>\n",
+       "      <td>-0.052330</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>0.188703</td>\n",
+       "      <td>0.147771</td>\n",
+       "      <td>0.089859</td>\n",
+       "      <td>0.115924</td>\n",
+       "      <td>-0.040933</td>\n",
+       "      <td>0.026065</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>0.183718</td>\n",
+       "      <td>0.164027</td>\n",
+       "      <td>0.104510</td>\n",
+       "      <td>0.089367</td>\n",
+       "      <td>-0.019691</td>\n",
+       "      <td>-0.015144</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>0.186603</td>\n",
+       "      <td>0.166868</td>\n",
+       "      <td>0.125598</td>\n",
+       "      <td>0.111245</td>\n",
+       "      <td>-0.019735</td>\n",
+       "      <td>-0.014353</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>0.194743</td>\n",
+       "      <td>0.168269</td>\n",
+       "      <td>0.076464</td>\n",
+       "      <td>0.112981</td>\n",
+       "      <td>-0.026474</td>\n",
+       "      <td>0.036517</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date   GC_cont    GC_exp   NC_cont    NC_exp   GC_Sign   NC_Sign\n",
+       "0  Sat, Oct 11  0.195051  0.153061  0.101892  0.049563 -0.041990 -0.052330\n",
+       "1  Sun, Oct 12  0.188703  0.147771  0.089859  0.115924 -0.040933  0.026065\n",
+       "2  Mon, Oct 13  0.183718  0.164027  0.104510  0.089367 -0.019691 -0.015144\n",
+       "3  Tue, Oct 14  0.186603  0.166868  0.125598  0.111245 -0.019735 -0.014353\n",
+       "4  Wed, Oct 15  0.194743  0.168269  0.076464  0.112981 -0.026474  0.036517"
+      ]
+     },
+     "execution_count": 140,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Calculate positive or negative difference across groups\n",
+    "signtest['GC_Sign'] = signtest.GC_exp - signtest.GC_cont\n",
+    "signtest['NC_Sign'] = signtest.NC_exp - signtest.NC_cont\n",
+    "signtest.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 146,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The number of trial is 23 \n",
+      "The number of Gross Conversion success is 4 \n",
+      "The number of Net Conversion success is 10\n"
+     ]
+    }
+   ],
+   "source": [
+    "total = len(signtest)\n",
+    "#total\n",
+    "\n",
+    "GC_success = len(signtest[signtest.GC_Sign > 0])\n",
+    "#GC_sucess\n",
+    "\n",
+    "NC_success = len(signtest[signtest.NC_Sign > 0])\n",
+    "#NC_success\n",
+    "\n",
+    "print('The number of trial is {}'.format(total),'\\n'\n",
+    "     'The number of Gross Conversion success is {}'.format(GC_success), '\\n'\n",
+    "     'The number of Net Conversion success is {}'.format(NC_success))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
