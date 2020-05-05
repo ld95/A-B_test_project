@@ -1,0 +1,368 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[2]:
+
+
+get_ipython().system('ls Baseline%20Values.csv')
+
+
+# In[3]:
+
+
+get_ipython().system('curl https://raw.githubusercontent.com/carolchen128/AB-Testing-Project/master/ControlGroup_data.csv --output ControlGroup_data.csv')
+
+
+# In[4]:
+
+
+get_ipython().system('ls ControlGroup_data.csv')
+
+
+# In[5]:
+
+
+get_ipython().system('curl https://raw.githubusercontent.com/carolchen128/AB-Testing-Project/master/ExperimentGroup_data.csv --output ExperimentGroup_data.csv')
+
+
+# In[6]:
+
+
+get_ipython().system('ls ExperimentGroup_data.csv')
+
+
+# In[2]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# In[3]:
+
+
+# load baseline data
+baseline = pd.read_csv('Baseline%20Values.csv', header = None, names = ['metric', 'baseline_value'])
+#type(baseline)  # dataframe
+baseline
+
+
+# In[4]:
+
+
+# load experiment dataset
+experiment = pd.read_csv('ExperimentGroup_data.csv')
+#experiment
+
+# load control dataset
+control = pd.read_csv('ControlGroup_data.csv')
+control.head()
+
+
+# In[5]:
+
+
+# Given baseline values
+cookie_base = 40000
+click_base = 3200
+enrollment_base = 660
+
+# Daily pageview cookies
+dailycookie = 5000
+n_click = dailycookie * click_base / cookie_base
+n_enrollment = dailycookie * enrollment_base / cookie_base
+
+
+# In[6]:
+
+
+print('the number of clicks is %d' % (n_click))
+print('the number of enrollment is %f' % (n_enrollment))
+
+
+# # 2. Metric -variability- standard deviation
+
+# In[7]:
+
+
+# metric - variability 
+# calculate standard deviation
+# Gross conversion - Probability of enrolling, given click
+grossconv = 0.206250
+grossconv_sd = round(np.sqrt(grossconv * (1 - grossconv) / 400), 4)
+grossconv_sd
+print('the standard deviation of gross conversion is {} '.format(grossconv_sd))
+
+
+# In[8]:
+
+
+# metric: retention - variability
+# calculate standard deviation
+# retention - probability of payment, given enroll
+
+retention = 0.53
+retention_sd = round(np.sqrt(retention * (1 - retention) / 82.5), 4)
+retention_sd
+print('the standard deviation of retention is {}'.format(retention_sd))
+
+
+# In[9]:
+
+
+# metric: Net conversion - variability
+# calculate standard deviation 
+# Net conversion - Probability of payment, given click
+
+netconv = 0.109313
+netconv_sd = round(np.sqrt(netconv * (1 - netconv) / 400), 4)
+netconv_sd
+print('the standard deviation of net conversion is {:.4}'.format(netconv_sd))
+
+
+# In[10]:
+
+
+# summarize data to create a table
+results = {'Control': pd.Series([control.Pageviews.sum(), control.Clicks.sum()],
+                               index = ['Cookies', 'Clicks']),
+          'Experiment': pd.Series([experiment.Pageviews.sum(), experiment.Clicks.sum()],
+                                 index = ['Cookies', 'Clicks'])}
+results = pd.DataFrame(results)
+results
+
+
+# # 3. Summarize data
+
+# In[11]:
+
+
+table = pd.DataFrame({
+    'Control': [control.Pageviews.sum(), control.Clicks.sum()], 
+    'Experiment': [experiment.Pageviews.sum(), experiment.Clicks.sum()]}, 
+    index  = ['Cookies', 'Clicks'])
+table
+
+
+# # 4.Sanity Check
+# cookies and clicks are randomly assgned to control and experiment group with probability of 0.5
+# <br> total - expected_value - standard error - margin of error - CI
+# <br> observed_value - sanity check
+
+# In[12]:
+
+
+# calculate
+table['Total'] = table.Control + table.Experiment
+
+table['Expected_value'] = 0.5
+table['Observed_value'] = table.Experiment / table.Total
+
+table['Standard_Error'] = np.sqrt(table.Expected_value * (1 - table.Expected_value) * 
+                                  (1/ table.Control + 1/ table.Experiment))
+
+table['Margin_Error'] = 1.96 * table.Standard_Error
+
+table['CI_Lower'] = table.Expected_value - table.Margin_Error
+table['CI_Upper'] = table.Expected_value + table.Margin_Error
+
+table['Pass_Sanity'] = table.apply(lambda x: (x.Observed_value > x.CI_Lower) 
+                                   and (x.Observed_value < x.CI_Upper), 
+                                   axis = 1)
+
+table['Diff'] = abs((table.Experiment - table.Control) / table.Total)
+table
+
+
+# In[13]:
+
+
+control_sub = control[pd.isnull(control.Enrollments) != True]
+#control_sub
+
+experiment_sub = experiment[pd.isnull(experiment.Enrollments) != True]
+experiment_sub.head()
+
+
+# In[14]:
+
+
+# summarize data
+table_sub = pd.DataFrame({'Control': [control_sub.Pageviews.sum(), 
+                                      control_sub.Clicks.sum(),
+                                     control_sub.Enrollments.sum(),
+                                     control_sub.Payments.sum()],
+                         'Experiment': [experiment_sub.Pageviews.sum(),
+                                       experiment_sub.Clicks.sum(),
+                                       experiment_sub.Enrollments.sum(),
+                                       experiment_sub.Payments.sum()]},
+                        index = ['Pageviews', 'Clicks', 'Enrollments', 'Payments'])
+table_sub
+
+
+# In[15]:
+
+
+# add new column: Total
+table_sub['Total'] = table_sub.Control + table_sub.Experiment
+table_sub
+
+
+# In[16]:
+
+
+table_sub.index
+
+
+# In[17]:
+
+
+# Get values for calculation
+
+# experiment values
+clicks_exp = table_sub.loc['Clicks'].Experiment
+enrollments_exp = table_sub.loc['Enrollments'].Experiment
+payments_exp = table_sub.loc['Payments'].Experiment
+
+# control values
+clicks_cont = table_sub.loc['Clicks'].Control
+enrollments_cont = table_sub.loc['Enrollments'].Control
+payments_cont = table_sub.loc['Payments'].Control
+
+
+# In[18]:
+
+
+# calculate GrossConversion for both control and experiment groups, total
+
+GrossConversion_exp = enrollments_exp / clicks_exp
+GrossConversion_cont = enrollments_cont / clicks_cont
+GrossConversion_total = (enrollments_exp + enrollments_cont) / (clicks_exp + clicks_cont)
+
+print('the Gross Conversion for Experiment group is {:.4}'.format(GrossConversion_exp),'\n'
+     'the Gross Conversion for Control group is {:.4}'.format(GrossConversion_cont), '\n'
+     'the Gross Conversion for Total is {:.4}'.format(GrossConversion_total))
+
+
+# In[19]:
+
+
+# calculate NetConversion for Control group, Experiment group, Total
+
+NetConversion_exp  = payments_exp / clicks_exp
+NetConversion_cont = payments_cont / clicks_cont
+NetConversion_total = (payments_exp + payments_cont) / (clicks_exp + clicks_cont)
+
+print('the Net Conversion for Experiment group is {:.4}'.format(NetConversion_exp),'\n'
+     'the Net Conversion for Control group is {:.4}'.format(NetConversion_cont), '\n'
+     'the Net Conversion for Total is {:.4}'.format(NetConversion_total))
+
+
+# In[20]:
+
+
+# caluculate the differences between 2 groups - point estimate
+# Grosss Conversion
+GrossConversion_diff = GrossConversion_exp - GrossConversion_cont
+GrossConversion_diff
+
+# Net Conversion
+NetConversion_diff = NetConversion_exp - NetConversion_cont
+NetConversion_diff
+
+GrossConversion_diff, NetConversion_diff
+
+
+# In[21]:
+
+
+# define a function to construct 95% CI
+def construct_CI(p_hat, z_score, N_cont, N_exp, diff):
+    std_err = np.sqrt(p_hat * (1 - p_hat) * (1/N_cont + 1/N_exp))
+    marg_err = z_score * std_err
+    CI_lower = diff - marg_err
+    CI_upper = diff + marg_err
+    
+    return std_err, marg_err, CI_lower, CI_upper
+
+
+# In[23]:
+
+
+(se_gc, me_gc, cil_gc, ciu_gc) = construct_CI(p_hat = GrossConversion_total,
+            z_score = 1.96,
+            N_cont = clicks_cont,
+            N_exp = clicks_exp,
+            diff = GrossConversion_diff)
+(se_gc, me_gc, cil_gc, ciu_gc)
+
+
+# In[131]:
+
+
+# Get statistics for Net Conversion
+(se_nc, me_nc, cil_nc, ciu_nc) = construct_CI(p_hat = NetConversion_total, 
+             z_score = 1.96, 
+            N_cont = clicks_cont,
+            N_exp = clicks_exp,
+            diff = NetConversion_diff)
+(se_nc, me_nc, cil_nc, ciu_nc)
+
+# CI - contain 0 - not pratically/ statistically significant difference/effect
+
+
+# In[133]:
+
+
+control_sub.head()
+
+
+# In[137]:
+
+
+# not significant - day-by-day analysis
+# Create a summary table for each day
+signtest = pd.DataFrame()
+
+signtest['Date'] = control_sub.Date
+
+signtest['GC_cont'] = control_sub.Enrollments / control_sub.Clicks
+signtest['GC_exp'] = experiment_sub.Enrollments / experiment_sub.Clicks
+
+signtest['NC_cont'] = control_sub.Payments / control_sub.Clicks
+signtest['NC_exp'] = experiment_sub.Payments / experiment_sub.Clicks
+
+signtest.head()
+
+
+# In[140]:
+
+
+# Calculate positive or negative difference across groups
+signtest['GC_Sign'] = signtest.GC_exp - signtest.GC_cont
+signtest['NC_Sign'] = signtest.NC_exp - signtest.NC_cont
+signtest.head()
+
+
+# In[146]:
+
+
+total = len(signtest)
+#total
+
+GC_success = len(signtest[signtest.GC_Sign > 0])
+#GC_sucess
+
+NC_success = len(signtest[signtest.NC_Sign > 0])
+#NC_success
+
+print('The number of trial is {}'.format(total),'\n'
+     'The number of Gross Conversion success is {}'.format(GC_success), '\n'
+     'The number of Net Conversion success is {}'.format(NC_success))
+
+
+# In[ ]:
+
+
+
+
